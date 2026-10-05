@@ -1,0 +1,31 @@
+.check-in-hero__lead {
+  max-width: 28rem;
+  margin: var(--space-md) auto 0;
+}
+
+.check-in-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-top: 0;
+  padding-bottom: var(--space-section);
+}
+
+.check-in-card__title {
+  margin: 0 0 var(--space-sm);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.011em;
+}
+
+.check-in-card__venue {
+  margin-bottom: var(--space-md);
+}
+
+.coords {
+  margin: 0 0 var(--space-md);
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--color-body-muted);
+  word-break: break-all;
+}
