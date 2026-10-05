@@ -118,12 +118,17 @@ export default function CheckInPage() {
         })
         return
       }
+      if (err.code === 'DEVICE_MISMATCH') {
+        setModal({
+          type: 'deviceMismatch',
+          message: err.message,
+        })
+        return
+      }
       if (err.code === 'OUTSIDE_GEOFENCE') {
         setFormError(
           `${err.message} If you are testing from a laptop, the browser may be using an approximate (wrong) location — try on a phone at the venue with GPS enabled.`
         )
-      } else if (err.code === 'DEVICE_MISMATCH') {
-        setFormError(err.message)
       } else {
         setFormError(err.message)
       }
@@ -207,7 +212,7 @@ export default function CheckInPage() {
                 required
                 value={externalId}
                 onChange={(e) => setExternalId(e.target.value)}
-                placeholder="Employee or student ID"
+                placeholder="Staff ID"
               />
             </label>
 
@@ -299,6 +304,14 @@ export default function CheckInPage() {
             </>
           )}
         </p>
+      </CheckInModal>
+
+      <CheckInModal
+        open={modal?.type === 'deviceMismatch'}
+        title="Wrong device"
+        onClose={() => setModal(null)}
+      >
+        {modal?.type === 'deviceMismatch' && <p>{modal.message}</p>}
       </CheckInModal>
     </PublicLayout>
   )
