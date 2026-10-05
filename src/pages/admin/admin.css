@@ -86,6 +86,14 @@
   color: var(--color-body-muted);
 }
 
+.device-panel {
+  margin-bottom: var(--space-lg);
+}
+
+.device-panel .btn {
+  margin-top: var(--space-sm);
+}
+
 .section-head {
   display: flex;
   align-items: baseline;

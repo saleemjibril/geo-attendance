@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { checkIn, fetchVenueConfig, lookupUser } from '../api'
+import { getOrCreateDeviceToken } from '../lib/deviceToken'
 import CheckInModal from '../components/CheckInModal'
 import PublicLayout from '../components/PublicLayout'
 import { useGeolocation } from '../hooks/useGeolocation'
@@ -95,6 +96,7 @@ export default function CheckInPage() {
         externalId: externalId.trim(),
         name: userKnown ? undefined : name.trim(),
         phone: userKnown ? undefined : phone.trim(),
+        deviceToken: getOrCreateDeviceToken(),
         latitude: geo.latitude,
         longitude: geo.longitude,
         accuracyMeters: geo.accuracyMeters,
@@ -120,6 +122,8 @@ export default function CheckInPage() {
         setFormError(
           `${err.message} If you are testing from a laptop, the browser may be using an approximate (wrong) location — try on a phone at the venue with GPS enabled.`
         )
+      } else if (err.code === 'DEVICE_MISMATCH') {
+        setFormError(err.message)
       } else {
         setFormError(err.message)
       }

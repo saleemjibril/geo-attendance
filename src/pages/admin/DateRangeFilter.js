@@ -5,16 +5,35 @@ import {
   getDateRangeForPreset,
 } from '../../lib/dates'
 
-export default function DateRangeFilter({ from, to, onApplyRange }) {
+export default function DateRangeFilter({
+  from,
+  to,
+  onApplyRange,
+  period: periodFromParent,
+  onPeriodChange,
+}) {
   const [draftFrom, setDraftFrom] = useState(from)
   const [draftTo, setDraftTo] = useState(to)
-  const [period, setPeriod] = useState(() => detectDateRangePreset(from, to))
+  const [internalPeriod, setInternalPeriod] = useState(() =>
+    periodFromParent ?? detectDateRangePreset(from, to)
+  )
+
+  const period = periodFromParent ?? internalPeriod
+
+  function setPeriod(value) {
+    onPeriodChange?.(value)
+    if (periodFromParent === undefined) {
+      setInternalPeriod(value)
+    }
+  }
 
   useEffect(() => {
     setDraftFrom(from)
     setDraftTo(to)
-    setPeriod(detectDateRangePreset(from, to))
-  }, [from, to])
+    if (periodFromParent === undefined) {
+      setInternalPeriod(detectDateRangePreset(from, to))
+    }
+  }, [from, to, periodFromParent])
 
   function handlePresetChange(event) {
     const value = event.target.value

@@ -4,11 +4,20 @@ import AdminLayout from '../../components/AdminLayout'
 import { fetchAdminUsers } from '../../api/admin'
 import {
   DATE_RANGE_PRESET,
+  detectDateRangePreset,
   formatDateRangeLabel,
   todayIsoDate,
 } from '../../lib/dates'
 import DateRangeFilter from './DateRangeFilter'
 import './admin.css'
+
+function formatDateTime(value) {
+  if (!value) return '—'
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
+}
 
 function readRangeFromParams(searchParams) {
   const from = searchParams.get('from')
@@ -23,14 +32,22 @@ function readRangeFromParams(searchParams) {
 export default function AdminDashboardPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [periodLabel, setPeriodLabel] = useState(DATE_RANGE_PRESET.TODAY)
+  const [periodLabel, setPeriodLabel] = useState(() => {
+    const fromParam = searchParams.get('from')
+    const toParam = searchParams.get('to')
+    if (fromParam && toParam) {
+      return detectDateRangePreset(fromParam, toParam)
+    }
+    return DATE_RANGE_PRESET.TODAY
+  })
 
   const { from, to } = readRangeFromParams(searchParams)
 
   useEffect(() => {
-    if (!searchParams.get('from') || !searchParams.get('to')) {
+    if (!searchParams.get('from') && !searchParams.get('to')) {
       const today = todayIsoDate()
       setSearchParams({ from: today, to: today }, { replace: true })
+      setPeriodLabel(DATE_RANGE_PRESET.TODAY)
     }
   }, [searchParams, setSearchParams])
 
@@ -102,7 +119,13 @@ export default function AdminDashboardPage() {
         </article>
       </div>
 
-      <DateRangeFilter from={from} to={to} onApplyRange={applyRange} />
+      <DateRangeFilter
+        from={from}
+        to={to}
+        period={periodLabel}
+        onPeriodChange={setPeriodLabel}
+        onApplyRange={applyRange}
+      />
 
       {error && (
         <p className="message message--error" role="alert">{error}</p>
@@ -124,13 +147,14 @@ export default function AdminDashboardPage() {
                   <th scope="col">Name</th>
                   <th scope="col">ID</th>
                   <th scope="col">Phone</th>
-                  <th scope="col" className="num">Days</th>
+                  <th scope="col" className="num">Attendance</th>
+                  <th scope="col">Last attendance marked</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={4}>No users yet.</td>
+                    <td colSpan={5}>No users yet.</td>
                   </tr>
                 )}
                 {users.map((user) => {
@@ -150,6 +174,7 @@ export default function AdminDashboardPage() {
                       <td translate="no">{user.externalId}</td>
                       <td>{user.phone}</td>
                       <td className="num">{user.attendanceCount}</td>
+                      <td>{formatDateTime(user.lastAttendanceAt)}</td>
                     </tr>
                   )
                 })}

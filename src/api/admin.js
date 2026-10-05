@@ -7,6 +7,7 @@ async function parseJsonResponse(response) {
   if (!response.ok) {
     const error = new Error(data.error || 'Request failed')
     error.status = response.status
+    error.code = data.code
     throw error
   }
   return data
@@ -56,6 +57,22 @@ export async function fetchAdminUserDetail(userId, { from, to } = {}) {
   const response = await fetch(
     `${API_BASE}/api/admin/users/${encodeURIComponent(userId)}${query ? `?${query}` : ''}`,
     { headers: authHeaders() }
+  )
+
+  if (response.status === 401) {
+    clearAdminToken()
+  }
+
+  return parseJsonResponse(response)
+}
+
+export async function unbindAdminUserDevice(userId) {
+  const response = await fetch(
+    `${API_BASE}/api/admin/users/${encodeURIComponent(userId)}/device`,
+    {
+      method: 'DELETE',
+      headers: authHeaders(),
+    }
   )
 
   if (response.status === 401) {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AdminLayout from '../../components/AdminLayout'
-import { fetchAdminUserDetail } from '../../api/admin'
+import { fetchAdminUserDetail, unbindAdminUserDevice } from '../../api/admin'
 import {
   DATE_RANGE_PRESET,
   formatDateRangeLabel,
@@ -46,6 +46,8 @@ export default function AdminUserDetailPage() {
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [unbindState, setUnbindState] = useState('idle')
+  const [unbindMessage, setUnbindMessage] = useState(null)
 
   const loadDetail = useCallback(async () => {
     setLoading(true)
@@ -81,6 +83,32 @@ export default function AdminUserDetailPage() {
   const backQuery = new URLSearchParams({ from, to }).toString()
   const rangeLabel = formatDateRangeLabel(from, to, periodLabel)
 
+  async function handleUnbindDevice() {
+    if (!detail?.user) return
+
+    const confirmed = window.confirm(
+      `Unbind the device for ${detail.user.name}? They will bind a new phone on their next check-in.`
+    )
+    if (!confirmed) return
+
+    setUnbindState('loading')
+    setUnbindMessage(null)
+    setError(null)
+    try {
+      await unbindAdminUserDevice(userId)
+      setUnbindMessage('Device unbound. The user can register a new phone at next check-in.')
+      await loadDetail()
+    } catch (err) {
+      if (err.status === 401) {
+        navigate('/admin/login', { replace: true })
+        return
+      }
+      setError(err.message)
+    } finally {
+      setUnbindState('idle')
+    }
+  }
+
   return (
     <AdminLayout
       title={detail?.user.name ?? 'User detail'}
@@ -114,6 +142,30 @@ export default function AdminUserDetailPage() {
           </p>
         </article>
       </div>
+
+      {detail && (
+        <section className="utility-card device-panel" aria-labelledby="device-panel-title">
+          <div className="section-head">
+            <h2 id="device-panel-title">Registered device</h2>
+          </div>
+          <p className="message message--muted">
+            {detail.user.deviceBound
+              ? `Bound since ${formatDateTime(detail.user.deviceBoundAt)}`
+              : 'No device bound yet — the next successful check-in will register this user’s phone.'}
+          </p>
+          {unbindMessage && (
+            <p className="message message--ok" role="status">{unbindMessage}</p>
+          )}
+          <button
+            type="button"
+            className="btn btn--secondary-pill"
+            onClick={handleUnbindDevice}
+            disabled={!detail.user.deviceBound || unbindState === 'loading'}
+          >
+            {unbindState === 'loading' ? 'Unbinding…' : 'Unbind device'}
+          </button>
+        </section>
+      )}
 
       <DateRangeFilter from={from} to={to} onApplyRange={applyRange} />
 
